@@ -23,14 +23,14 @@ library(colourpicker)
 
 # HTML(markdown::markdownToHTML(knitr::knit(system.file("vignettes/teaching_module.Rmd", package = "tusklessness"), quiet = TRUE)))
 teaching_mods <- c("teaching_module.md")
+metadata_mods <- c("metadata.md")
 
-load("data/elephantMorphometricsAndTuskSize.rda")
+load("data/dfmorph.rda")
 
-dataset <- elephantMorphometricsAndTuskSize %>%
-  mutate(Sex = as.factor(Sex),
-         `Years of sample collection` = as.factor(`Years of sample collection`),
-         `Elephant ID` = as.factor(`Elephant ID`))
-attr(dataset, "df_name") <- "elephantMorphometricsAndTuskSize"
+# Data cleaning
+dataset <- dfmorph
+
+attr(dataset, "df_name") <- "dfmorph"
 
 dataset_all <- colnames(dataset)
 dataset_num <- dataset_all[sapply(dataset, is.numeric)]
@@ -39,7 +39,7 @@ dataset_cat <- dataset_all[-which(dataset_all %in% dataset_num)] # setdiff?
 ui <- dashboardPagePlus(
   dashboardHeaderPlus(
     title = tagList(
-      span(class = "logo-lg", "Tusklessness"),
+      span(class = "logo-lg", "BIRDD"),
       img(src = "")
     )
   ),
@@ -68,7 +68,11 @@ ui <- dashboardPagePlus(
               includeMarkdown("www/teaching_module.md")
       ),
       tabItem(tabName = "data",
-              DTOutput('table')
+              tabBox(
+                width = "100%",
+                tabPanel("Table", DTOutput('table')),
+                tabPanel("Metadata", includeMarkdown("www/metadata.md"))
+              )
       ),
       tabItem(tabName = "explore",
               serenityVizUI(id = "explore", dataset = dataset, showcode = FALSE, height="700px")
