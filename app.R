@@ -16,13 +16,14 @@ library(shinydashboardPlus)
 library(ggplot2)
 library(magrittr)
 library(dplyr)
+library(forcats)
 library(DT)
 library(readr)
 library(bsplus)
 library(colourpicker)
 
 # HTML(markdown::markdownToHTML(knitr::knit(system.file("vignettes/teaching_module.Rmd", package = "tusklessness"), quiet = TRUE)))
-teaching_mods <- c("teaching_module.md")
+teaching_mods <- c("teaching_module_header.md, Exercise1.md, Exercise2.md")
 metadata_mods <- c("metadata.md")
 
 load("data/dfmorph.rda")
@@ -59,13 +60,31 @@ ui <- dashboardPagePlus(
                            tabName = "tests")
       )
     ),
-    hr()
+    hr(),
+    conditionalPanel("input.sidebar == 'module'",
+                     downloadButton('download', 'Download')
+    )
   ),
   # Dashboard Body ----
   dashboardBody(
     tabItems(
       tabItem(tabName = "module",
-              includeMarkdown("www/teaching_module.md")
+              includeMarkdown("www/teaching_module_header.md"),
+              textAreaInput("title", "Title", width="600px", rows = 1, placeholder = "Put your title here"),
+              textAreaInput("authors", "Authors", width="600px", rows = 2, placeholder = "Put author names here"),
+              includeMarkdown("www/Exercise1.md"),
+              textInput("dataset_name", "Dataset name", width="600px"),
+              numericInput("num_records", "Number of records", value = 0, min = 0, step = 1),
+              numericInput("num_columns", "Number of columns", value = 0, min = 0, step = 1),
+              textAreaInput("observation", "Share an oberservation or question about the dataset", width="600px", rows = 4, placeholder = "Observation or question"),
+              includeMarkdown("www/Exercise2.md"),
+              textAreaInput("plot_response", NULL, width="600px", rows = 4, placeholder = "Please replace this text with a brief interpretive statement about some of the information in the graph above."),
+              includeMarkdown("www/Exercise2b.md"),
+              actionButton("getPlot", "Grab Plot"),
+              plotOutput("myplot", width = "50%"),
+              textAreaInput("myplot_response", NULL, width="600px", rows = 4, placeholder = "Replace this text with a brief description of your graph and a question that it has helped you formulate."),
+              includeMarkdown("www/Exercise3.md"),
+              textAreaInput("mytable_response", NULL, width="600px", rows = 4, placeholder = "Replace this text with your data manipulation code and visualization(s) - be sure to include a brief interpretive description for each graph.")
       ),
       tabItem(tabName = "data",
               tabBox(
@@ -243,6 +262,17 @@ server <- function(input, output, session) {
                              id = "explore",
                              dataset = dataset)
 
+  plots <- reactiveValues(myplot_text = NULL)
+  
+  observeEvent(input$getPlot, {
+    plots$myplot_text <- explore_plot()
+  }, ignoreInit = TRUE)
+  
+  output$myplot <- renderPlot({
+    req(plots$myplot_text)
+    eval(parse(text=plots$myplot_text))
+  })
+  
   # Main Data Table ----
   output$table <- renderDT(
     dataset,
@@ -461,15 +491,29 @@ server <- function(input, output, session) {
     # the argument 'file'.
     content = function(file) {
       tmp <- tempfile(fileext = ".Rmd")
-      content <- paste(purrr::map(teaching_mods, ~ read_file(paste0("www/", .))), collapse = "\n")
-      content <- paste(c(content, input$q1a), collapse = "\n")
-
+      file.copy("www/Exercise2_files/figure-markdown_strict/unnamed-chunk-1-1.png", tempdir())
+      content <- read_file("www/teaching_module_header.md")
+      content <- paste(c(content, paste('###', input$title)), collapse = "\n")
+      content <- paste(c(content, paste('####', input$authors)), collapse = "\n")
+      content <- paste(c(content, read_file("www/Exercise1.md")), collapse = "\n")
+      content <- paste(c(content, paste('Dataset name:', input$dataset_name)), collapse = "\n")
+      content <- paste(c(content, paste('<br>Number of records:', input$num_records)), collapse = "\n")
+      content <- paste(c(content, paste('<br>Number of columns:', input$num_columns)), collapse = "\n")
+      content <- paste(c(content, paste('<br>Observation or question:', input$observation)), collapse = "\n")
+      content <- paste(c(content, gsub("Exercise2_files/figure-markdown_strict/", "", read_file("www/Exercise2.md"))), collapse = "\n")
+      content <- paste(c(content, paste('<br>Description of Plot:', input$plot_response)), collapse = "\n")
+      content <- paste(c(content, read_file("www/Exercise2b.md")), collapse = "\n")
+      
       # Get plot
       if (!is.null(plots$myplot_text)) {
         plotrmd <- paste(c("\n```{r, echo=FALSE, warning=FALSE}", paste(plots$myplot_text, collapse = "\n"), "```\n"), collapse = "\n")
         content <- paste(c(content, plotrmd), collapse = "\n")
       }
 
+      content <- paste(c(content, paste('<br>Plot discussion:', input$myplot_response)), collapse = "\n")
+      content <- paste(c(content, read_file("www/Exercise3.md")), collapse = "\n")
+      content <- paste(c(content, paste('<br>Table discussion:', input$mytable_response)), collapse = "\n")
+      
       cat(content, file = tmp)
       rmarkdown::render(tmp, output_file = file)
     }

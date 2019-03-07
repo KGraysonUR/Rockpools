@@ -1,0 +1,31 @@
+---
+always_allow_html: yes
+output: 
+  html_document: 
+    keep_md: yes
+  md_document:
+    preserve_yaml: false
+---
+
+<p></p>
+## Exercise 3 - Data manipulation 
+This dataset contains morphological, island, and taxonomic information about a lot of birds. Sometimes the data is not in the proper format to directly answer a question. For example, **how many distinct species are on each island?** This is shown in the following pivot table.
+
+```{r fig.width=8.08, fig.height=3.88, dpi = 96, echo = FALSE, warning = FALSE, message = FALSE}
+library(dplyr)
+library(kableExtra)
+load("../data/dfmorph.rda")
+
+dfmorph %>% 
+  filter(Source == "Lack CAS") %>% 
+  group_by(IslandID) %>% 
+  summarize(SpeciesL69 = n_distinct(SpeciesL69)) %>%
+  kable(align = "l",
+        col.names = c("Island ID",
+                      "Species L69")) %>%
+  kable_styling("bordered", full_width = F) %>%
+  row_spec(0, background = "#EEE") %>% 
+  row_spec(1:28, background = "white")
+```
+
+Now use the "Pivot", "Explore", or "Transform" tabs of the Data area to try to recreate these results. Once this is done, ask a different question that requires some data processing and include your results below.

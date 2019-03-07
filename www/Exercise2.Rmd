@@ -1,0 +1,21 @@
+---
+output: 
+  md_document:
+    preserve_yaml: false
+  html_document: 
+    keep_md: yes
+---
+
+<p></p>
+## Exercise 2 - Initial visualization
+
+The box plot below shows wing length data for each of the 5 finch genera included in the Sato dataset. If you haven't worked with this kind of graph before you can [learn more about box plots here](http://vita.had.co.nz/papers/boxplots.pdf).  
+
+```{r fig.width=8.00, fig.height=5.54, dpi = 96, echo=FALSE, warning=FALSE}
+load("../data/dfmorph.rda")
+library(ggplot2)
+library(magrittr)
+dfmorph %>%
+  ggplot(aes(x = GenusL69, y = WingL)) +
+  geom_boxplot(aes(fill = GenusL69))
+```  

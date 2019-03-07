@@ -1,0 +1,24 @@
+---
+output: 
+  md_document:
+    preserve_yaml: false
+  html_document: 
+    keep_md: yes
+---
+
+<style type="text/css">
+body, td {
+   font-size: 16px;
+}
+.table { width: auto; }
+</style>
+
+```{r, echo=FALSE}
+library(knitr)
+library(kableExtra)
+```
+
+***
+
+## Exercise 1 - Taking a quick look at the data
+In the "Data" area you can use the "Manage" and "View" tabs to learn a little bit about the dataset. Please record the following information.  

@@ -1,0 +1,26 @@
+---
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{eval=FALSE, echo = FALSE}
+Scroll bar issues:
+https://stackoverflow.com/questions/21684101/css-vertical-scrollbar-padding-left-right-in-ul-possible
+```
+
+<style type="text/css">
+body, td {
+   font-size: 16px;
+}
+.table { width: auto; }
+</style>
+
+```{r, echo=FALSE}
+library(knitr)
+library(kableExtra)
+```
+
+![](https://qubeshub.org/groups/birdd/File:birdd.JPG)
+
+## BIRDD Activity: Exploring Finch Morphology Data

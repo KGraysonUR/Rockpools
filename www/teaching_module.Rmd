@@ -57,9 +57,13 @@ Now use the "Visualize" tab of the Data area to try to recreate this graph. Once
 This dataset contains morphological, island, and taxonomic information about a lot of birds. Sometimes the data is not in the proper format to directly answer a question. For example, **how many distinct species are on each island?** This is shown in the following pivot table.
 
 ```{r fig.width=8.08, fig.height=3.88, dpi = 96}
-# result <- pivotr(dataset = "Sato", cvars = "IslandID", nvar = "SpeciesL69", fun = "n_distinct", nr = 28)
-# summary(result)
-# plot(result, flip = TRUE)
+dfmorph %>% 
+  filter(Source == "Lack CAS") %>% 
+  group_by(IslandID) %>% 
+  summarize(SpeciesL69 = n_distinct(SpeciesL69)) %>%
+  kable(align = "l",
+        col.names = c("Island ID",
+                      "Species L69"))
 ```
 
 Now use the "Pivot", "Explore", or "Transform" tabs of the Data area to try to recreate these results. Once this is done, ask a different question that requires some data processing and include your results below.
