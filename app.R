@@ -62,7 +62,7 @@ ui <- dashboardPagePlus(
     ),
     hr(),
     conditionalPanel("input.sidebar == 'module'",
-                     downloadButton('download', 'Download')
+                     downloadButton('download', 'Download Report')
     )
   ),
   # Dashboard Body ----
@@ -82,9 +82,9 @@ ui <- dashboardPagePlus(
               includeMarkdown("www/Exercise2b.md"),
               actionButton("getPlot", "Grab Plot"),
               plotOutput("myplot", width = "50%"),
-              textAreaInput("myplot_response", NULL, width="600px", rows = 4, placeholder = "Replace this text with a brief description of your graph and a question that it has helped you formulate."),
-              includeMarkdown("www/Exercise3.md"),
-              textAreaInput("mytable_response", NULL, width="600px", rows = 4, placeholder = "Replace this text with your data manipulation code and visualization(s) - be sure to include a brief interpretive description for each graph.")
+              textAreaInput("myplot_response", NULL, width="600px", rows = 4, placeholder = "Replace this text with a brief description of your graph and a question that it has helped you formulate.")
+              # includeMarkdown("www/Exercise3.md"),
+              # textAreaInput("mytable_response", NULL, width="600px", rows = 4, placeholder = "Replace this text with your data manipulation code and visualization(s) - be sure to include a brief interpretive description for each graph.")
       ),
       tabItem(tabName = "data",
               tabBox(
@@ -94,7 +94,7 @@ ui <- dashboardPagePlus(
               )
       ),
       tabItem(tabName = "explore",
-              serenityVizUI(id = "explore", dataset = dataset, showcode = FALSE, height="700px")
+              serenityVizUI(id = "explore", dataset = dataset, showcode = FALSE, height="90%")
       ),
       tabItem(tabName = "summaries",
               box(
@@ -128,14 +128,8 @@ ui <- dashboardPagePlus(
                 selectizeInput(
                   "statistics",
                   "Statistics:",
-                  choices = c("Min" = "min",
-                              "1st Qu." = "firstquartile",
-                              "Median" = "median",
-                              "Mean" = "mean",
-                              "3rd Qu." = "thirdquartile",
-                              "Max" = "max"),
+                  choices = NULL,
                   multiple = TRUE,
-                  selected = c("min", "firstquartile", "median", "mean", "thirdquartile", "max"),
                   options = list(
                     'plugins' = list('remove_button',
                                      'drag_drop'),
@@ -263,6 +257,20 @@ server <- function(input, output, session) {
                              dataset = dataset)
 
   plots <- reactiveValues(myplot_text = NULL)
+
+  updateSelectizeInput(session, 'statistics', 
+                       choices = list(
+                         Center = c("Mean" = "mean",
+                                    "Median" = "median"),
+                         Spread = c("Standard Deviation" = "sd",
+                                    "IQR" = "IQR"),
+                         Range = c("Min" = "min",
+                                   "Max" = "max",
+                                   "1st Qu." = "firstquartile",
+                                   "3rd Qu." = "thirdquartile"),
+                         Count = c("Number" = "n")
+                       )
+  )
   
   observeEvent(input$getPlot, {
     plots$myplot_text <- explore_plot()
@@ -280,10 +288,7 @@ server <- function(input, output, session) {
     rownames = FALSE,
     style = "bootstrap",
     selection = "none",
-    extensions = 'Scroller',
-    options = list(scrollY = 400,
-                   deferRender = FALSE,
-                   scroller = TRUE)
+    options = list(scrollX = 400)
     )
 
   # Statistical Tests ----
@@ -416,25 +421,48 @@ server <- function(input, output, session) {
 
   # Summary statistics ----
   statsummary <- reactive({
-    req(input$variable)
-
+    req(input$statistics)
     # tmp <- elephant %>% group_by(!!sym(groupby)) %>% summarize_at(vars(variable), list(Q1 = ~quantile(., probs=0.25), Q3 = ~quantile(., probs=0.75)), na.rm=TRUE)
     funmap <- list(min = min,
                    firstquartile = ~quantile(., 0.25),
                    median = median,
                    mean = mean,
                    thirdquartile = ~quantile(., 0.75),
-                   max = max)
-    funmap <- funmap[input$statistics]
+                   max = max,
+                   sd = sd,
+                   IQR = IQR)
+    countmap <- list(n = quo(n()))
+    funmap <- dropNulls(funmap[input$statistics])
+    countmap <- dropNulls(countmap[input$statistics])
 
+    if (length(funmap) > 0) {
+      validate(
+        need(isTruthy(input$variable), "Please select at least one variable.")
+      )
+    }
+    
     # Gotta be a cleaner way then using an if statement here...
     if (!is.null(input$groupby)) {
       statsum <- dataset %>% dplyr::group_by(!!!syms(input$groupby))
     } else {
       statsum <- dataset
     }
-    statsum <- statsum %>%
-      dplyr::summarize_at(vars(input$variable), funmap, na.rm=TRUE)
+    
+    if (!is.null(input$variable)) {
+      if (length(countmap) > 0) {
+        statsum <- statsum %>% mutate(!!!countmap)
+        
+        if (!is.null(input$groupby)) {
+          statsum <- statsum %>% group_by_(names(countmap), add = TRUE)
+        }
+      }
+      
+      statsum <- statsum %>%
+        dplyr::summarize_at(vars(input$variable), funmap, na.rm=TRUE)
+    } else 
+      if (length(countmap) > 0) {
+        statsum <- statsum %>% summarize(!!!countmap)
+      }
 
     if (length(input$variable) > 1) {
       statsum <- statsum %>%
@@ -464,7 +492,8 @@ server <- function(input, output, session) {
       selection = "none",
       options = list(
         dom = "t",
-        searchCols = NULL
+        searchCols = NULL,
+        paging = FALSE
       )
     ) %>% DT::formatStyle(cn_cat,
                           color = "white",
@@ -511,13 +540,17 @@ server <- function(input, output, session) {
       }
 
       content <- paste(c(content, paste('<br>Plot discussion:', input$myplot_response)), collapse = "\n")
-      content <- paste(c(content, read_file("www/Exercise3.md")), collapse = "\n")
-      content <- paste(c(content, paste('<br>Table discussion:', input$mytable_response)), collapse = "\n")
+      # content <- paste(c(content, read_file("www/Exercise3.md")), collapse = "\n")
+      # content <- paste(c(content, paste('<br>Table discussion:', input$mytable_response)), collapse = "\n")
       
       cat(content, file = tmp)
       rmarkdown::render(tmp, output_file = file)
     }
   )
+}
+
+dropNulls <- function(x) {
+  x[!vapply(x, is.null, FUN.VALUE=logical(1))]
 }
 
 # Run the application

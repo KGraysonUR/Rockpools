@@ -1,6 +1,5 @@
 .tab-pane {
-  height: 700px;
-  overflow-y: scroll;
+  height: calc(100vh - 52px);
   overflow-x: hidden;
 }
 

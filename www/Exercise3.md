@@ -1,6 +1,7 @@
+
 <p></p>
 ## Exercise 3 - Data manipulation 
-This dataset contains morphological, island, and taxonomic information about a lot of birds. Sometimes the data is not in the proper format to directly answer a question. For example, **how many distinct species are on each island?** This is shown in the following pivot table.
+This dataset contains morphological, island, and taxonomic information about a lot of birds. Sometimes the data is not in the proper format to directly answer a question. For example, **how many distinct species are on each island?** This is shown in the following table.
 
 <table class="table table-bordered" style="width: auto !important; margin-left: auto; margin-right: auto;">
  <thead>
@@ -125,4 +126,4 @@ This dataset contains morphological, island, and taxonomic information about a l
 </tbody>
 </table>
 
-Now use the "Pivot", "Explore", or "Transform" tabs of the Data area to try to recreate these results. Once this is done, ask a different question that requires some data processing and include your results below.
+Now use the "Analyze > Statistical Summaries" tab to try to recreate these results. Once this is done, ask a different question that requires some data processing and include your results below.
