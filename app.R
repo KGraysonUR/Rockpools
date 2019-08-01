@@ -31,7 +31,7 @@ dataset_cat <- dataset_all[-which(dataset_all %in% dataset_num)] # setdiff?
 ui <- dashboardPagePlus(
   dashboardHeaderPlus(
     title = tagList(
-      span(class = "logo-lg", "Rock Pools"),
+      span(class = "logo-lg", "Rock Pools Test"),
       img(src = "")
     )
   ),
